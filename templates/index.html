@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Todo List | TaskFlow Pro</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <div class="brand-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-title">TaskFlow</span>
+                        <span class="brand-badge">PRO</span>
+                    </div>
+                </div>
+                <button class="mobile-close-btn" id="mobileSidebarClose" aria-label="Menüyü Kapat">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Quick Overall Stats -->
+            <div class="sidebar-stats">
+                <div class="stat-mini">
+                    <span class="stat-mini-label">Tamamlanma</span>
+                    <span class="stat-mini-val" id="statMiniRate">0%</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="sidebarProgressBar" style="width: 0%"></div>
+                </div>
+                <div class="stat-counts">
+                    <span id="statCompletedBadge">0 Tamamlandı</span>
+                    <span>•</span>
+                    <span id="statPendingBadge">0 Bekleyen</span>
+                </div>
+            </div>
+
+            <!-- List Categories Section -->
+            <div class="sidebar-section">
+                <div class="section-title-wrap">
+                    <span class="section-title">LİSTELERİM</span>
+                    <button class="add-list-trigger" id="btnOpenNewListModal" title="Yeni Liste Oluştur">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        <span>Yeni</span>
+                    </button>
+                </div>
+
+                <nav class="lists-nav">
+                    <!-- Fixed All Tasks View -->
+                    <button class="nav-item active" data-list-id="all" id="navItemAll">
+                        <span class="nav-icon">✨</span>
+                        <span class="nav-name">Tüm Görevler</span>
+                        <span class="nav-badge" id="badgeAllCount">0</span>
+                    </button>
+
+                    <!-- Dynamic Lists Container -->
+                    <div id="dynamicListsContainer" class="dynamic-lists">
+                        <!-- Injected via JavaScript -->
+                    </div>
+                </nav>
+            </div>
+
+            <div class="sidebar-footer">
+                <a href="https://github.com/dmrt-57" target="_blank" rel="noopener noreferrer" class="profile-card">
+                    <div class="profile-avatar">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                        </svg>
+                    </div>
+                    <div class="profile-info">
+                        <span class="profile-name">dmrt-57</span>
+                        <span class="profile-handle">GitHub Profile ↗</span>
+                    </div>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content View -->
+        <main class="main-content">
+            <!-- Top Navbar with Search & Controls -->
+            <header class="top-nav">
+                <div class="nav-left">
+                    <button class="mobile-menu-btn" id="mobileMenuOpen" aria-label="Menüyü Aç">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+                    <!-- Global / List Search Form -->
+                    <div class="search-box">
+                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="searchInput" placeholder="Görevlerde veya notlarda ara... (örn: süt, proje)" autocomplete="off">
+                        <button class="search-clear-btn" id="searchClearBtn" title="Aramayı Temizle">✕</button>
+                        <button class="search-action-btn" id="searchSubmitBtn" title="Ara">
+                            <span>Ara</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="nav-right">
+                    <!-- Theme Toggle -->
+                    <button class="theme-toggle" id="themeToggleBtn" title="Tema Değiştir (Açık/Koyu)">
+                        <span class="theme-icon light-icon">☀️</span>
+                        <span class="theme-icon dark-icon">🌙</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard Body -->
+            <div class="content-body">
+                <!-- Current Active Header Banner -->
+                <div class="view-header">
+                    <div class="view-header-title">
+                        <div class="view-icon-badge" id="currentViewIcon">📋</div>
+                        <div>
+                            <h1 class="view-title" id="currentViewTitle">Tüm Görevler</h1>
+                            <p class="view-subtitle" id="currentViewSubtitle">Tüm listelerdeki aktif ve tamamlanmış görevleriniz</p>
+                        </div>
+                    </div>
+                    <div class="view-actions" id="currentListActions" style="display: none;">
+                        <button class="btn-danger-outline btn-sm" id="btnDeleteCurrentList" title="Listeyi Sil">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            <span>Listeyi Sil</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Create New Task Card -->
+                <div class="task-create-card">
+                    <form id="taskCreateForm">
+                        <div class="task-input-row">
+                            <div class="task-main-input-wrap">
+                                <span class="input-plus-icon">+</span>
+                                <input type="text" id="taskTitleInput" placeholder="Yeni bir görev ekleyin... (Enter'a basın)" required autocomplete="off">
+                            </div>
+                            <button type="submit" class="btn-primary" id="btnCreateTask">
+                                <span>Görevi Ekle</span>
+                            </button>
+                        </div>
+
+                        <!-- Task Details Row (Expandable / Inline) -->
+                        <div class="task-details-row">
+                            <div class="task-detail-item">
+                                <label for="taskListSelect">📁 Liste:</label>
+                                <select id="taskListSelect">
+                                    <!-- Options populated dynamically -->
+                                </select>
+                            </div>
+
+                            <div class="task-detail-item">
+                                <label for="taskPrioritySelect">⚡ Öncelik:</label>
+                                <select id="taskPrioritySelect">
+                                    <option value="low">🟢 Düşük</option>
+                                    <option value="medium" selected>🟡 Orta</option>
+                                    <option value="high">🔴 Yüksek</option>
+                                </select>
+                            </div>
+
+                            <div class="task-detail-item">
+                                <label for="taskDueDateInput">📅 Tarih:</label>
+                                <input type="date" id="taskDueDateInput">
+                            </div>
+
+                            <div class="task-detail-item grow">
+                                <label for="taskNotesInput">📝 Not:</label>
+                                <input type="text" id="taskNotesInput" placeholder="Ek detay veya not...">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Filter & Sorting Tabs -->
+                <div class="filters-bar">
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-filter="all">Tümü (<span id="filterCountAll">0</span>)</button>
+                        <button class="filter-tab" data-filter="pending">Bekleyenler (<span id="filterCountPending">0</span>)</button>
+                        <button class="filter-tab" data-filter="completed">Tamamlananlar (<span id="filterCountCompleted">0</span>)</button>
+                    </div>
+
+                    <div class="filter-dropdowns">
+                        <select id="priorityFilterSelect" class="select-filter">
+                            <option value="all">Tüm Öncelikler</option>
+                            <option value="high">🔴 Sadece Yüksek</option>
+                            <option value="medium">🟡 Sadece Orta</option>
+                            <option value="low">🟢 Sadece Düşük</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tasks List View Container -->
+                <div class="tasks-container">
+                    <!-- Active/Pending Tasks -->
+                    <div class="task-section">
+                        <div class="task-section-header">
+                            <span class="section-badge badge-pending">Aktif Görevler</span>
+                            <span class="section-count" id="pendingSectionCount">0 görev</span>
+                        </div>
+                        <div class="task-list" id="pendingTasksList">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Completed Tasks -->
+                    <div class="task-section" id="completedSection">
+                        <div class="task-section-header collapsible" id="completedSectionToggle">
+                            <div class="header-left">
+                                <span class="arrow-icon">▼</span>
+                                <span class="section-badge badge-completed">Tamamlanan Görevler</span>
+                            </div>
+                            <span class="section-count" id="completedSectionCount">0 görev</span>
+                        </div>
+                        <div class="task-list" id="completedTasksList">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Empty State View -->
+                    <div class="empty-state" id="emptyStateContainer" style="display: none;">
+                        <div class="empty-icon">🎉</div>
+                        <h3 class="empty-title">Henüz görev bulunmuyor</h3>
+                        <p class="empty-desc">Yukarıdaki kutuyu kullanarak bu listeye ilk görevinizi ekleyin!</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL: Yeni Liste Oluştur -->
+    <div class="modal-overlay" id="modalCreateList">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Yeni Liste Oluştur</h3>
+                <button class="modal-close-btn" data-close-modal="modalCreateList">✕</button>
+            </div>
+            <form id="createListForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="newListNameInput">Liste Adı</label>
+                        <input type="text" id="newListNameInput" placeholder="Örn: 🛒 Haftalık Market Alışverişi" required autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label>Simge Seçin</label>
+                        <div class="emoji-picker" id="emojiPicker">
+                            <button type="button" class="emoji-opt selected" data-emoji="📋">📋</button>
+                            <button type="button" class="emoji-opt" data-emoji="🛒">🛒</button>
+                            <button type="button" class="emoji-opt" data-emoji="💼">💼</button>
+                            <button type="button" class="emoji-opt" data-emoji="🎯">🎯</button>
+                            <button type="button" class="emoji-opt" data-emoji="📚">📚</button>
+                            <button type="button" class="emoji-opt" data-emoji="🏠">🏠</button>
+                            <button type="button" class="emoji-opt" data-emoji="⚡">⚡</button>
+                            <button type="button" class="emoji-opt" data-emoji="🍔">🍔</button>
+                            <button type="button" class="emoji-opt" data-emoji="✈️">✈️</button>
+                            <button type="button" class="emoji-opt" data-emoji="💪">💪</button>
+                        </div>
+                        <input type="hidden" id="newListIconInput" value="📋">
+                    </div>
+                    <div class="form-group">
+                        <label>Tema Rengi</label>
+                        <div class="color-picker" id="colorPicker">
+                            <button type="button" class="color-opt selected" style="--c: #6366f1" data-color="#6366f1"></button>
+                            <button type="button" class="color-opt" style="--c: #10b981" data-color="#10b981"></button>
+                            <button type="button" class="color-opt" style="--c: #f59e0b" data-color="#f59e0b"></button>
+                            <button type="button" class="color-opt" style="--c: #ef4444" data-color="#ef4444"></button>
+                            <button type="button" class="color-opt" style="--c: #8b5cf6" data-color="#8b5cf6"></button>
+                            <button type="button" class="color-opt" style="--c: #06b6d4" data-color="#06b6d4"></button>
+                            <button type="button" class="color-opt" style="--c: #ec4899" data-color="#ec4899"></button>
+                        </div>
+                        <input type="hidden" id="newListColorInput" value="#6366f1">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-close-modal="modalCreateList">Vazgeç</button>
+                    <button type="submit" class="btn-primary">Listeyi Oluştur</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Silme Onay Penceresi (Confirm Modal) -->
+    <div class="modal-overlay" id="modalConfirmDelete">
+        <div class="modal-card modal-confirm">
+            <div class="confirm-icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+            </div>
+            <h3 class="confirm-title" id="confirmModalTitle">Silmek istediğinize emin misiniz?</h3>
+            <p class="confirm-desc" id="confirmModalDesc">Bu işlem geri alınamaz ve seçilen öğe kalıcı olarak silinir.</p>
+            <div class="confirm-actions">
+                <button type="button" class="btn-secondary" id="btnCancelDelete">Vazgeç</button>
+                <button type="button" class="btn-danger" id="btnConfirmDelete">Evet, Sil</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Görev Düzenle (Edit Task Modal) -->
+    <div class="modal-overlay" id="modalEditTask">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Görevi Düzenle</h3>
+                <button class="modal-close-btn" data-close-modal="modalEditTask">✕</button>
+            </div>
+            <form id="editTaskForm">
+                <input type="hidden" id="editTaskId">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editTaskTitle">Görev Başlığı</label>
+                        <input type="text" id="editTaskTitle" required autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="editTaskNotes">Notlar / Açıklama</label>
+                        <textarea id="editTaskNotes" rows="3" placeholder="Göreve dair detaylı notlar..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label for="editTaskPriority">Öncelik</label>
+                            <select id="editTaskPriority">
+                                <option value="low">🟢 Düşük</option>
+                                <option value="medium">🟡 Orta</option>
+                                <option value="high">🔴 Yüksek</option>
+                            </select>
+                        </div>
+                        <div class="form-group half">
+                            <label for="editTaskDueDate">Bitiş Tarihi</label>
+                            <input type="date" id="editTaskDueDate">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-close-modal="modalEditTask">Vazgeç</button>
+                    <button type="submit" class="btn-primary">Değişiklikleri Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
