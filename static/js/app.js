@@ -109,13 +109,17 @@ async function api(endpoint, options = {}) {
             config.body = JSON.stringify(config.body);
         }
         const res = await fetch(endpoint, config);
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-            throw new Error(data.error || 'İşlem sırasında bir hata oluştu');
+            throw new Error(data.error || `Sunucu hatası (${res.status})`);
         }
         return data;
     } catch (err) {
-        showToast(err.message, 'danger');
+        if (err.name === 'TypeError' && err.message.toLowerCase().includes('fetch')) {
+            showToast('Sunucu bağlantısı kurulamadı! Terminalde "python3 app.py" çalıştığından emin olun.', 'danger');
+        } else {
+            showToast(err.message, 'danger');
+        }
         throw err;
     }
 }
@@ -388,13 +392,17 @@ async function handleCreateTask(e) {
     if (!title) return;
 
     let targetListId = elements.taskListSelect.value;
-    if (!targetListId) {
-        if (state.lists.length > 0) {
+    if (!targetListId || isNaN(parseInt(targetListId))) {
+        if (state.currentListId !== 'all') {
+            targetListId = state.currentListId;
+        } else if (state.lists.length > 0) {
             targetListId = state.lists[0].id;
-        } else {
-            showToast('Lütfen önce bir liste oluşturun!', 'danger');
-            return;
         }
+    }
+
+    if (!targetListId) {
+        showToast('Lütfen önce bir liste oluşturun veya seçin!', 'danger');
+        return;
     }
 
     const payload = {
@@ -405,9 +413,14 @@ async function handleCreateTask(e) {
         due_date: elements.taskDueDateInput.value || null
     };
 
+    const submitBtn = elements.taskCreateForm.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+    }
+
     try {
         await api('/api/tasks', { method: 'POST', body: payload });
-        showToast('Görev başarıyla eklendi', 'success');
+        showToast('Görev başarıyla eklendi 🎉', 'success');
         elements.taskTitleInput.value = '';
         elements.taskNotesInput.value = '';
         elements.taskDueDateInput.value = '';
@@ -416,7 +429,11 @@ async function handleCreateTask(e) {
         await fetchTasks();
         await fetchStats();
     } catch (err) {
-        console.error(err);
+        console.error('Görev ekleme hatası:', err);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+        }
     }
 }
 

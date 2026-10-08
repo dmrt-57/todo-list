@@ -42,12 +42,13 @@ MIME_TYPES = {
 
 class TodoRequestHandler(http.server.SimpleHTTPRequestHandler):
     """Handles REST API and static template file serving."""
+    protocol_version = "HTTP/1.1"
 
     def end_headers(self):
         # Enable CORS and standard caching headers for API
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         super().end_headers()
 
     def do_OPTIONS(self):
@@ -61,21 +62,30 @@ class TodoRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+        self.wfile.flush()
 
     def send_error_json(self, message, status=HTTPStatus.BAD_REQUEST):
         self.send_json({"error": message}, status=status)
 
     def parse_json_body(self):
-        content_length = int(self.headers.get("Content-Length", 0))
-        if content_length == 0:
-            return {}
-        raw_body = self.rfile.read(content_length).decode("utf-8")
         try:
+            content_length = int(self.headers.get("Content-Length", 0))
+            if content_length == 0:
+                return {}
+            raw_body = self.rfile.read(content_length).decode("utf-8")
             return json.loads(raw_body)
-        except Exception:
+        except Exception as e:
+            sys.stderr.write(f"JSON Ayrıştırma Hatası: {e}\n")
             return {}
 
     def do_GET(self):
+        try:
+            self._handle_get()
+        except Exception as e:
+            sys.stderr.write(f"GET Hatası: {e}\n")
+            self.send_error_json(f"Sunucu hatası: {str(e)}", HTTPStatus.INTERNAL_SERVER_ERROR)
+
+    def _handle_get(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
         query = urllib.parse.parse_qs(parsed.query)
@@ -141,6 +151,13 @@ class TodoRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_error_json("Sayfa bulunamadı", HTTPStatus.NOT_FOUND)
 
     def do_POST(self):
+        try:
+            self._handle_post()
+        except Exception as e:
+            sys.stderr.write(f"POST Hatası: {e}\n")
+            self.send_error_json(f"Sunucu hatası: {str(e)}", HTTPStatus.INTERNAL_SERVER_ERROR)
+
+    def _handle_post(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
 
@@ -171,15 +188,22 @@ class TodoRequestHandler(http.server.SimpleHTTPRequestHandler):
             if not title:
                 self.send_error_json("Görev başlığı boş olamaz")
                 return
-            if not list_id:
-                self.send_error_json("Görev için liste seçilmelidir")
-                return
 
-            try:
+            # Gracefully handle list_id
+            if list_id is not None and str(list_id).isdigit():
                 list_id = int(list_id)
-            except ValueError:
-                self.send_error_json("Geçersiz liste ID")
-                return
+                target_list = database.get_list_by_id(list_id)
+            else:
+                target_list = None
+
+            # Fallback if list not found or invalid
+            if not target_list:
+                lists = database.get_lists()
+                if lists:
+                    list_id = lists[0]["id"]
+                else:
+                    created_l = database.create_list("Genel Liste", "📋", "#6366f1")
+                    list_id = created_l["id"]
 
             new_task = database.create_task(
                 list_id=list_id,
@@ -208,6 +232,13 @@ class TodoRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_error_json("Endpoint bulunamadı", HTTPStatus.NOT_FOUND)
 
     def do_PUT(self):
+        try:
+            self._handle_put()
+        except Exception as e:
+            sys.stderr.write(f"PUT Hatası: {e}\n")
+            self.send_error_json(f"Sunucu hatası: {str(e)}", HTTPStatus.INTERNAL_SERVER_ERROR)
+
+    def _handle_put(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
 
@@ -267,6 +298,13 @@ class TodoRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_error_json("Endpoint bulunamadı", HTTPStatus.NOT_FOUND)
 
     def do_DELETE(self):
+        try:
+            self._handle_delete()
+        except Exception as e:
+            sys.stderr.write(f"DELETE Hatası: {e}\n")
+            self.send_error_json(f"Sunucu hatası: {str(e)}", HTTPStatus.INTERNAL_SERVER_ERROR)
+
+    def _handle_delete(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
 
@@ -307,6 +345,7 @@ class TodoRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header("Content-Length", str(len(content)))
             self.end_headers()
             self.wfile.write(content)
+            self.wfile.flush()
         except Exception as e:
             self.send_error_json(f"Dosya okuma hatası: {str(e)}", HTTPStatus.INTERNAL_SERVER_ERROR)
 

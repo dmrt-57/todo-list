@@ -5,18 +5,24 @@ Handles SQLite operations, connection pooling, schema migrations, and seed data.
 
 import sqlite3
 import os
+import contextlib
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "todos.db")
 
 
-def get_connection() -> sqlite3.Connection:
-    """Returns a SQLite connection with row factory and foreign keys enabled."""
-    conn = sqlite3.connect(DB_FILE)
+@contextlib.contextmanager
+def get_connection():
+    """Returns a SQLite connection with WAL mode, foreign keys, and guarantees closing."""
+    conn = sqlite3.connect(DB_FILE, timeout=30.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
-    return conn
+    conn.execute("PRAGMA journal_mode = WAL;")
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 
 def init_db():
